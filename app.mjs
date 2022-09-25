@@ -10,22 +10,22 @@ app.use(cors())
 
 
 let todoItems = {
-    // "ai": {
-    //     "items": [
-    //         {
-    //             "text": "123",
-    //             "id": 1664046906811
-    //         },
-    //         {
-    //             "text": "456",
-    //             "id": 1664046907663
-    //         },
-    //         {
-    //             "text": "789",
-    //             "id": 1664046908951
-    //         }
-    //     ]
-    // }
+    "ai": {
+        "items": [
+            {
+                "text": "123",
+                "id": 1664046906811
+            },
+            {
+                "text": "456",
+                "id": 1664046907663
+            },
+            {
+                "text": "789",
+                "id": 1664046908951
+            }
+        ]
+    }
 }
 // let course;
 
@@ -52,7 +52,7 @@ app.get('/todoItems', (req, res) => {
             data: todoItems
         })
     } else {
-        res.send({
+        res.status(400).send({
             msg: 'Data not Found',
         })
     }
@@ -69,7 +69,7 @@ app.post('/todoItem', (req, res) => {
             data: todoItems
         })
     } else {
-        res.send({
+        res.status(400).send({
             msg: 'Course is not found , plz add course first'
         })
     }
@@ -80,17 +80,23 @@ app.put('/todoItem/:course/:id', (req, res) => {
     const id = +req.params.id
     const course = req.params.course
     let data = todoItems[course].items
+    const found = data.some(item => item.id === id);
 
-    for (let i = 0; i < data.length; i++) {
-        const element = data[i];
-        if (element.id === id) {
-            element.text = text
-            todoItems = data
-            res.send({
-                msg: 'item updated',
-                data: todoItems
-            });
-            break
+    if (!found) {
+        res.status(400).send({ msg: `No item with id of ${id} found` });
+    } else {
+        for (let i = 0; i < data.length; i++) {
+            const element = data[i];
+            if (element.id === id) {
+                element.text = text
+                todoItems[course].items = data
+                console.log(`item edited with ${id}`);
+                res.send({
+                    msg: 'item updated',
+                    data: todoItems
+                });
+                break
+            }
         }
     }
 
@@ -104,9 +110,10 @@ app.delete('/todoItem/:course/:id', (req, res) => {
     const found = data.some(item => item.id === id);
 
     if (!found) {
-        res.status(400).json({ msg: `No item with id of ${id} found` });
+        res.status(400).send({ msg: `No item with id of ${id} found` });
     } else {
         todoItems[course].items = data.filter(item => item.id !== id);
+        console.log(`item deleted with ${id}`);
         res.send({
             msg: 'item deleted',
             data: todoItems
@@ -117,6 +124,10 @@ app.delete('/todoItem/:course/:id', (req, res) => {
 app.get('/', (req, res) => {
     res.send(`<h1>Hello Obaid :)</h1> 
     <h3>You are hiting me with ${req.ip}</h3>`)
+})
+
+app.get('*', (req, res) => {
+    res.send(`404`)
 })
 
 
