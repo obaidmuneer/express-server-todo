@@ -1,13 +1,11 @@
 import express from 'express'
 import cors from 'cors'
+import fileUpload from 'express-fileupload'
 
 const app = express()
 const port = process.env.PORT || 8080
 app.use(express.json())
 app.use(cors())
-
-
-
 
 let todoItems = {
     "ai": {
@@ -27,7 +25,31 @@ let todoItems = {
         ]
     }
 }
-// let course;
+
+app.use(fileUpload({
+    createParentPath: true
+}))
+
+app.post('/upload', async (req, res) => {
+    // console.log(req.files);    
+    try {
+        if (!req.files) {
+            res.status(400).send({
+                msg: "Something went wrong"
+            })
+        } else {
+            let uploadedFile = req.files.uploadedFile
+            uploadedFile.mv(`./uploads/${uploadedFile.name}`)
+            res.send({
+                msg: 'file uploaded',
+                data: uploadedFile.name
+            })
+        }
+    } catch (error) {
+        console.log(error);
+    }
+})
+
 
 app.post('/courses', (req, res) => {
     let course = req.body.course
@@ -101,7 +123,6 @@ app.put('/todoItem/:course/:id', (req, res) => {
     }
 
 })
-
 
 app.delete('/todoItem/:course/:id', (req, res) => {
     const id = +req.params.id
