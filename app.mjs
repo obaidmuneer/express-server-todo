@@ -8,22 +8,22 @@ app.use(express.json())
 app.use(cors())
 
 let todoItems = {
-    // "ai": {
-    //     "items": [
-    //         {
-    //             "text": "123",
-    //             "id": 1664046906811
-    //         },
-    //         {
-    //             "text": "456",
-    //             "id": 1664046907663
-    //         },
-    //         {
-    //             "text": "789",
-    //             "id": 1664046908951
-    //         }
-    //     ]
-    // }
+    "ai": {
+        "items": [
+            {
+                "text": "123",
+                "id": 1664046906811
+            },
+            {
+                "text": "456",
+                "id": 1664046907663
+            },
+            {
+                "text": "789",
+                "id": 1664046908951
+            }
+        ]
+    }
 }
 
 app.use(fileUpload({
@@ -140,6 +140,14 @@ app.delete('/todoItem/:course/:id', (req, res) => {
             data: todoItems
         });
     }
+})
+
+app.delete('/:course', (req, res) => {
+    const course = req.params.course
+    todoItems[course] = { items: [] }
+    res.send({
+        msg:`Data cleared for ${course}`
+    })
 })
 
 app.get('/', (req, res) => {
