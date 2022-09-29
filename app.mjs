@@ -8,30 +8,32 @@ app.use(express.json())
 app.use(cors())
 
 let todoItems = {
-    // "ai": {
-    //     "items": [
-    //         {
-    //             "text": "123",
-    //             "id": 1664046906811
-    //         },
-    //         {
-    //             "text": "456",
-    //             "id": 1664046907663
-    //         },
-    //         {
-    //             "text": "789",
-    //             "id": 1664046908951
-    //         }
-    //     ]
-    // }
+    "ai": {
+        "items": [
+            {
+                "text": "123",
+                "id": 1664046906811
+            },
+            {
+                "text": "456",
+                "id": 1664046907663
+            },
+            {
+                "text": "789",
+                "id": 1664046908951
+            }
+        ]
+    }
 }
+app.use(express.static('uploads'))
 
 app.use(fileUpload({
     createParentPath: true
 }))
 
-app.post('/upload', async (req, res) => {
+app.post('/:course/upload', async (req, res) => {
     // console.log(req.files);    
+    const course = req.params.course
     try {
         if (!req.files) {
             res.status(400).send({
@@ -39,10 +41,15 @@ app.post('/upload', async (req, res) => {
             })
         } else {
             let uploadedFile = req.files.uploadedFile
-            uploadedFile.mv(`./uploads/${uploadedFile.name}`)
+            console.log(uploadedFile.name);
+            uploadedFile.mv(`./uploads/${course}/${uploadedFile.name}`)
+            todoItems[course].items.push({
+                filename: uploadedFile.name,
+                id : Date.now()
+            })
             res.send({
                 msg: 'file uploaded',
-                data: uploadedFile.name
+                data:todoItems
             })
         }
     } catch (error) {
@@ -127,6 +134,7 @@ app.put('/todoItem/:course/:id', (req, res) => {
 app.delete('/todoItem/:course/:id', (req, res) => {
     const id = +req.params.id
     const course = req.params.course
+    console.log(id,course);
     let data = todoItems[course].items
     const found = data.some(item => item.id === id);
 
@@ -146,7 +154,7 @@ app.delete('/:course', (req, res) => {
     const course = req.params.course
     todoItems[course] = { items: [] }
     res.send({
-        msg:`Data cleared for ${course}`
+        msg: `Data cleared for ${course}`
     })
 })
 

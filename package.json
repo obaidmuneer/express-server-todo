@@ -5,7 +5,7 @@
   "main": "app.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node app.mjs"
+    "start": "nodemon app.mjs"
   },
   "repository": {
     "type": "git",
