@@ -30,9 +30,9 @@ let todoSchema = new mongoose.Schema({
 let todoModel = mongoose.model('todos', todoSchema)
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, './uploads')
-    },
+    // destination: function (req, file, cb) {
+    //     cb(null, './uploads')
+    // },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
         cb(null, uniqueSuffix + '-' + file.originalname)
@@ -54,6 +54,7 @@ app.get('/upload', (req, res) => {
 app.post('/upload', upload.single('uploadedFile'), async (req, res) => {
     console.log(req.file);
     let result = await cloudinary.v2.uploader.upload(req.file.path)
+    console.log(result);
     todoModel.create({
         course: req.body.course,
         file: result.secure_url,
