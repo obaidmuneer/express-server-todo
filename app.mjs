@@ -1,21 +1,72 @@
-import express from 'express'
+import express, { text } from 'express'
 import cors from 'cors'
 import mongoose from 'mongoose'
+import multer from 'multer'
+import cloudinary from 'cloudinary'
+import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 
 const app = express()
 const port = process.env.PORT || 8080
+dotenv.config()
+
 app.use(express.json())
 app.use(cors())
+
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET
+});
 
 let dbUri = 'mongodb+srv://obaidmuneer:Abc123@cluster0.jop1spc.mongodb.net/?retryWrites=true&w=majority'
 mongoose.connect(dbUri)
 
 let todoSchema = new mongoose.Schema({
-    text: { type: String, require: true },
-    course: { type: String, require: true },
+    course: { type: String, required: true },
+    file: { type: String },
+    text: { type: String },
     createdAt: { type: Date, defaul: Date.now }
 })
 let todoModel = mongoose.model('todos', todoSchema)
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './uploads')
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+        cb(null, uniqueSuffix + '-' + file.originalname)
+    }
+})
+
+const upload = multer({ storage: storage })
+
+app.get('/upload', (req, res) => {
+    imgModel.find({}, (err, data) => {
+        if (!err) {
+            res.send({
+                data
+            })
+        }
+    })
+})
+
+app.post('/upload', upload.single('uploadedFile'), async (req, res) => {
+    console.log(req.file);
+    let result = await cloudinary.v2.uploader.upload(req.file.path)
+    todoModel.create({
+        course: req.body.course,
+        file: result.secure_url,
+        text: ''
+    }, (err, data) => {
+        if (!err) {
+            res.send({
+                msg: 'Your img is uploaded',
+                data: data
+            })
+        }
+    })
+})
 
 app.get('/todos', (req, res) => {
     todoModel.find({}, (err, data) => {
