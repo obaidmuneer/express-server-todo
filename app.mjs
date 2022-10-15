@@ -51,22 +51,32 @@ app.get('/upload', (req, res) => {
     })
 })
 
-app.post('/upload/:course', upload.single('uploadedFile'), async (req, res) => {
+app.post('/upload/:course', upload.single('uploadedFile'), async(req, res) => {
     console.log(req.file);
-    let result = await cloudinary.v2.uploader.upload(req.file.path)
-    console.log(result);
-    todoModel.create({
-        course: req.params.course,
-        file: result.secure_url,
-        text: ''
-    }, (err, data) => {
-        if (!err) {
-            res.send({
-                msg: 'Your img is uploaded',
-                data: data
-            })
-        }
-    })
+    try {
+        let result = await cloudinary.v2.uploader.upload(req.file.path)
+        res.send({
+            data:result
+        })
+    } catch (error) {
+        res.send({
+            err:error
+        })
+    }
+
+    // console.log(result);
+    // todoModel.create({
+    //     course: req.params.course,
+    //     file: result.secure_url,
+    //     text: ''
+    // }, (err, data) => {
+    //     if (!err) {
+    //         res.send({
+    //             msg: 'Your img is uploaded',
+    //             data: data
+    //         })
+    //     }
+    // })
 })
 
 app.get('/todos', (req, res) => {
