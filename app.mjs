@@ -1,82 +1,38 @@
 import express from 'express'
 import cors from 'cors'
-import mongoose from 'mongoose'
-import multer from 'multer'
-import cloudinary from 'cloudinary'
-import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+import { upload } from './handlers/multerConfig.mjs'
+import { cloudinary } from './handlers/cloudinaryConfig.mjs'
+import { todoModel } from "./model/todo.mjs";
 
 const app = express()
 const port = process.env.PORT || 8080
-dotenv.config()
 
 app.use(express.json())
 app.use(cors())
 
-cloudinary.config({
-    cloud_name: process.env.CLOUD_NAME,
-    api_key: process.env.API_KEY,
-    api_secret: process.env.API_SECRET
-});
+app.post('/upload/:course', upload, async (req, res) => {
+    try {
+        // console.log(req.file);
+        let result = await cloudinary.v2.uploader.upload(req.file.path)
+        // console.log(result);
+        let data = await todoModel.create({
+            course: req.params.course,
+            file: {
+                link: result.secure_url,
+                fileId: result.public_id
+            },
+            text: ''
+        })
+        res.send({
+            msg: 'Your img is uploaded',
+            data: data
+        })
 
-let dbUri = 'mongodb+srv://obaidmuneer:Abc123@cluster0.jop1spc.mongodb.net/?retryWrites=true&w=majority'
-mongoose.connect(dbUri)
-
-let todoSchema = new mongoose.Schema({
-    course: { type: String, required: true },
-    file: { type: Object },
-    text: { type: String },
-    createdAt: { type: Date, defaul: Date.now }
-})
-let todoModel = mongoose.model('todos', todoSchema)
-
-const storage = multer.diskStorage({
-    // destination: function (req, file, cb) {
-    //     cb(null, './uploads')
-    // },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-        cb(null, uniqueSuffix + '-' + file.originalname)
+    } catch (error) {
+        res.status(500).send({
+            msg: 'something is wrong'
+        })
     }
-})
-
-const upload = multer({ storage: storage })
-
-app.get('/upload', (req, res) => {
-    imgModel.find({}, (err, data) => {
-        if (!err) {
-            res.send({
-                data
-            })
-        }
-    })
-})
-
-app.delete('/upload/:id', async (req, res) => {
-    let result = await cloudinary.uploader.destroy(req.params.id);
-    res.send({
-        msg: 'img is deleted'
-    })
-})
-
-app.post('/upload/:course', upload.single('uploadedFile'), async (req, res) => {
-    // console.log(req.file);
-    let result = await cloudinary.v2.uploader.upload(req.file.path)
-    // console.log(result);
-    todoModel.create({
-        course: req.params.course,
-        file: {
-            link: result.secure_url,
-            fileId: result.public_id
-        },
-        text: ''
-    }, (err, data) => {
-        if (!err) {
-            res.send({
-                msg: 'Your img is uploaded',
-                data: data
-            })
-        }
-    })
 })
 
 app.get('/todos', (req, res) => {
@@ -136,7 +92,7 @@ app.put('/todo/:id', (req, res) => {
     });
 })
 
-app.delete('/todo/:id', async(req, res) => {
+app.delete('/todo/:id', async (req, res) => {
     let id = req.params.id
     id = id.split(' ')
     let todoId = id[0]
@@ -146,12 +102,13 @@ app.delete('/todo/:id', async(req, res) => {
         imgId = id[1]
         result = await cloudinary.uploader.destroy(imgId);
     }
-    todoModel.findByIdAndDelete(todoId, (err, data) => {
+    todoModel.findByIdAndDelete(todoId, (err, deletedData) => {
         res.send({
             data: {
-                data,
-                result : result || ''
-            }
+                deletedData,
+                result
+            },
+            msg: "Your item is deleted"
         })
     })
 })
