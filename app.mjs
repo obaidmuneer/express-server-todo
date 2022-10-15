@@ -51,19 +51,14 @@ app.get('/upload', (req, res) => {
     })
 })
 
-app.post('/upload/:course', upload.single('uploadedFile'), async(req, res) => {
+app.post('/upload/:course', upload.single('uploadedFile'), (req, res) => {
     console.log(req.file);
-    try {
-        let result = await cloudinary.v2.uploader.upload(req.file.path)
-        res.send({
-            data:result
-        })
-    } catch (error) {
-        res.send({
-            err:error
-        })
-    }
-
+    cloudinary.v2.uploader.upload(req.file.path)
+        .then(
+            (result) => {
+                console.log(result);
+            })
+        .catch(err => console.log(err))
     // console.log(result);
     // todoModel.create({
     //     course: req.params.course,
