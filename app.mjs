@@ -52,9 +52,9 @@ app.get('/upload', (req, res) => {
 })
 
 app.post('/upload/:course', upload.single('uploadedFile'), async(req, res) => {
-    console.log(req.file);
-    let result = cloudinary.v2.uploader.upload(req.file.path)
-    console.log(result);
+    // console.log(req.file);
+    let result = await cloudinary.v2.uploader.upload(req.file.path)
+    // console.log(result);
     todoModel.create({
         course: req.params.course,
         file: result.secure_url,
