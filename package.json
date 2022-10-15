@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/obaidmuneer/express-server#readme",
   "dependencies": {
+    "aws-sdk": "^2.1233.0",
     "cloudinary": "^1.32.0",
     "cors": "^2.8.5",
     "datauri": "^4.1.0",

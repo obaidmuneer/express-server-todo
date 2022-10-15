@@ -1,4 +1,4 @@
-import express, { text } from 'express'
+import express from 'express'
 import cors from 'cors'
 import mongoose from 'mongoose'
 import multer from 'multer'
@@ -51,27 +51,22 @@ app.get('/upload', (req, res) => {
     })
 })
 
-app.post('/upload/:course', upload.single('uploadedFile'), (req, res) => {
+app.post('/upload/:course', upload.single('uploadedFile'), async(req, res) => {
     console.log(req.file);
-    cloudinary.v2.uploader.upload(req.file.path)
-        .then(
-            (result) => {
-                console.log(result);
+    let result = cloudinary.v2.uploader.upload(req.file.path)
+    console.log(result);
+    todoModel.create({
+        course: req.params.course,
+        file: result.secure_url,
+        text: ''
+    }, (err, data) => {
+        if (!err) {
+            res.send({
+                msg: 'Your img is uploaded',
+                data: data
             })
-        .catch(err => console.log(err))
-    // console.log(result);
-    // todoModel.create({
-    //     course: req.params.course,
-    //     file: result.secure_url,
-    //     text: ''
-    // }, (err, data) => {
-    //     if (!err) {
-    //         res.send({
-    //             msg: 'Your img is uploaded',
-    //             data: data
-    //         })
-    //     }
-    // })
+        }
+    })
 })
 
 app.get('/todos', (req, res) => {
