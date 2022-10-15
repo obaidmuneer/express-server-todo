@@ -23,7 +23,7 @@ mongoose.connect(dbUri)
 
 let todoSchema = new mongoose.Schema({
     course: { type: String, required: true },
-    file: { type: String },
+    file: { type: Object },
     text: { type: String },
     createdAt: { type: Date, defaul: Date.now }
 })
@@ -51,13 +51,23 @@ app.get('/upload', (req, res) => {
     })
 })
 
-app.post('/upload/:course', upload.single('uploadedFile'), async(req, res) => {
+app.delete('/upload/:id', async (req, res) => {
+    let result = await cloudinary.uploader.destroy(req.params.id);
+    res.send({
+        msg: 'img is deleted'
+    })
+})
+
+app.post('/upload/:course', upload.single('uploadedFile'), async (req, res) => {
     // console.log(req.file);
     let result = await cloudinary.v2.uploader.upload(req.file.path)
     // console.log(result);
     todoModel.create({
         course: req.params.course,
-        file: result.secure_url,
+        file: {
+            link: result.secure_url,
+            fileId: result.public_id
+        },
         text: ''
     }, (err, data) => {
         if (!err) {
@@ -126,12 +136,22 @@ app.put('/todo/:id', (req, res) => {
     });
 })
 
-app.delete('/todo/:id', (req, res) => {
-    const id = req.params.id
-    console.log(id);
-    todoModel.findByIdAndDelete(id, (err, data) => {
+app.delete('/todo/:id', async(req, res) => {
+    let id = req.params.id
+    id = id.split(' ')
+    let todoId = id[0]
+    let imgId;
+    let result;
+    if (id.length > 1) {
+        imgId = id[1]
+        result = await cloudinary.uploader.destroy(imgId);
+    }
+    todoModel.findByIdAndDelete(todoId, (err, data) => {
         res.send({
-            data: data
+            data: {
+                data,
+                result : result || ''
+            }
         })
     })
 })
