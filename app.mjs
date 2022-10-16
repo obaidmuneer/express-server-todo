@@ -1,5 +1,6 @@
 import express from 'express'
 import cors from 'cors'
+
 import { upload } from './handlers/multerConfig.mjs'
 import { cloudinary } from './handlers/cloudinaryConfig.mjs'
 import { todoModel } from "./model/todo.mjs";
@@ -14,6 +15,9 @@ app.post('/upload/:course', upload, async (req, res) => {
     try {
         // console.log(req.file);
         let result = await cloudinary.v2.uploader.upload(req.file.path)
+        let addTag = await cloudinary.v2.uploader.add_tag(req.params.course, result.public_id,)
+        console.log(addTag);
+
         // console.log(result);
         let data = await todoModel.create({
             course: req.params.course,
@@ -35,19 +39,18 @@ app.post('/upload/:course', upload, async (req, res) => {
     }
 })
 
-app.get('/todos', (req, res) => {
-    todoModel.find({}, (err, data) => {
-        if (!err) {
-            console.log(data);
-            res.send({
-                data
-            })
-        } else {
-            res.status(500).send({
-                msg: 'something is wrong'
-            })
-        }
-    })
+app.get('/todos', async (req, res) => {
+    try {
+        let data = await todoModel.find({})
+        res.send({
+            data
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            msg: 'something is wrong'
+        })
+    }
 })
 
 app.get('/todos/:course', (req, res) => {
@@ -113,12 +116,15 @@ app.delete('/todo/:id', async (req, res) => {
     })
 })
 
-app.delete('/todos/:course', (req, res) => {
+app.delete('/todos/:course', async (req, res) => {
     const course = req.params.course
+    let result = await cloudinary.v2.api.delete_resources_by_tag(course);
+    // console.log(result);
     todoModel.deleteMany({ course: { $eq: course } }, (err, data) => {
         if (!err) {
             res.send({
-                data
+                data,
+                result
             })
         }
     })
